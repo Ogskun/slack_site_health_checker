@@ -12,26 +12,21 @@ client = slack.WebClient(token=SLACK_TOKEN)
 
 
 def check_site_urls(session):
-    tasks = []
-
-    for site in APPS:
-        tasks.append(session.get(site['url']))
-
-    return tasks
+    return [session.get(site['url']) for site in APPS]
 
 
 async def check_apps_status():
     async with aiohttp.ClientSession() as session:
         tasks = check_site_urls(session)
+
         responses = await asyncio.gather(*tasks)
 
         for response in responses:
+            if response.status == 401:
+                # Ignore checking if site has HT password
+                continue
+
             if response.status != 200:
-
-                if response.status == 401:
-                    # Ignore checking if site has HT password
-                    pass
-
                 message = f'{response.url} is down'
                 client.chat_postMessage(channel=SLACK_CHANNEL, text=message)
 

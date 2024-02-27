@@ -10,12 +10,9 @@ SLACK_TOKEN = os.environ.get('SLACK_TOKEN')
 SLACK_CHANNEL = os.environ.get('SLACK_CHANNEL')
 
 # List of site urls
-APPS = [{
-    # 'name': '',
-    # 'url': '',
-}]
+APPS = []
 
 try:
-    from .localsettings import *
+    from localsettings import *
 except:
     pass
