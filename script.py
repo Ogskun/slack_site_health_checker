@@ -1,5 +1,5 @@
-import asyncio
 import aiohttp
+import asyncio
 import slack
 
 from settings import (
@@ -11,23 +11,26 @@ from settings import (
 client = slack.WebClient(token=SLACK_TOKEN)
 
 
-def check_site_urls(session):
-    return [session.get(site['url']) for site in APPS]
+async def check_site_urls(session):
+    return [{'response': session.get(site['url']), 'name': site['name']} for site in APPS]
 
 
 async def check_apps_status():
     async with aiohttp.ClientSession() as session:
-        tasks = check_site_urls(session)
+        tasks = await check_site_urls(session)
 
-        responses = await asyncio.gather(*tasks)
+        coroutines = [coroutine['response'] for coroutine in tasks]
 
-        for response in responses:
-            if response.status == 401:
+        responses = await asyncio.gather(*coroutines)
+
+        for index, value in enumerate(responses):
+
+            if value.status == 401:
                 # Ignore checking if site has HT password
                 continue
-
-            if response.status != 200:
-                message = f'{response.url} is down'
+            
+            if value.status != 200:
+                message = f'{tasks[index]["name"]} is down'
                 client.chat_postMessage(channel=SLACK_CHANNEL, text=message)
 
 
