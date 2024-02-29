@@ -12,18 +12,27 @@ client = slack.WebClient(token=SLACK_TOKEN)
 
 
 async def check_site_urls(session):
-    return [{'response': session.get(site['url']), 'name': site['name']} for site in APPS]
+    return [{'response': session.get(site['url']), 
+             'name': site['name']} for site in APPS]
 
 
 async def check_apps_status():
     async with aiohttp.ClientSession() as session:
         tasks = await check_site_urls(session)
-        responses = await asyncio.gather(*(task['response'] for task in tasks), return_exceptions=True)
+
+        responses = await asyncio.gather(
+            *(task['response'] for task in tasks), 
+            return_exceptions=True,
+        )
 
         for task, response in zip(tasks, responses):
-            if isinstance(response, Exception) or response.status not in {200, 401}:
+            if isinstance(response, Exception) or \
+                response.status not in {200, 401}:
+
                 client.chat_postMessage(
-                    channel=SLACK_CHANNEL, text=f'{task["name"]} is down')
+                    channel=SLACK_CHANNEL, 
+                    text=f'{task["name"]} is down',
+                )
 
 
 loop = asyncio.get_event_loop()
